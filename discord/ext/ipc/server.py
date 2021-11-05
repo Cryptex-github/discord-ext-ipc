@@ -18,7 +18,6 @@ def route(name=None):
         The endpoint name. If not provided the method name will be
         used.
     """
-
     def decorator(func):
         if not name:
             Server.ROUTES[func.__name__] = func
@@ -107,7 +106,6 @@ class Server:
         name: str
             The endpoint name. If not provided the method name will be used.
         """
-
         def decorator(func):
             if not name:
                 self.endpoints[func.__name__] = func
@@ -152,25 +150,33 @@ class Server:
                 log.info(
                     "Received unauthorized request (Invalid or no token provided)."
                 )
-                response = {"error": "Invalid or no token provided.", "code": 403}
+                response = {
+                    "error": "Invalid or no token provided.",
+                    "code": 403
+                }
             else:
                 if not endpoint or endpoint not in self.endpoints:
-                    log.info("Received invalid request (Invalid or no endpoint given).")
-                    response = {"error": "Invalid or no endpoint given.", "code": 400}
+                    log.info(
+                        "Received invalid request (Invalid or no endpoint given)."
+                    )
+                    response = {
+                        "error": "Invalid or no endpoint given.",
+                        "code": 400
+                    }
                 else:
                     server_response = IpcServerResponse(request)
                     try:
                         attempted_cls = self.bot.cogs.get(
-                            self.endpoints[endpoint].__qualname__.split(".")[0]
-                        )
+                            self.endpoints[endpoint].__qualname__.split(
+                                ".")[0])
 
                         if attempted_cls:
                             arguments = (attempted_cls, server_response)
                         else:
-                            arguments = (server_response,)
+                            arguments = (server_response, )
                     except AttributeError:
                         # Support base Client
-                        arguments = (server_response,)
+                        arguments = (server_response, )
 
                     try:
                         ret = await self.endpoints[endpoint](*arguments)
@@ -192,14 +198,12 @@ class Server:
                 await websocket.send_json(response)
                 log.debug("IPC Server > %r", response)
             except TypeError as error:
-                if str(error).startswith("Object of type") and str(error).endswith(
-                    "is not JSON serializable"
-                ):
+                if str(error).startswith("Object of type") and str(
+                        error).endswith("is not JSON serializable"):
                     error_response = (
                         "IPC route returned values which are not able to be sent over sockets."
                         " If you are trying to send a discord.py object,"
-                        " please only send the data you need."
-                    )
+                        " please only send the data you need.")
                     log.error(error_response)
 
                     response = {"error": error_response, "code": 500}
@@ -229,7 +233,10 @@ class Server:
             headers = request.get("headers")
 
             if not headers or headers.get("Authorization") != self.secret_key:
-                response = {"error": "Invalid or no token provided.", "code": 403}
+                response = {
+                    "error": "Invalid or no token provided.",
+                    "code": 403
+                }
             else:
                 response = {
                     "message": "Connection success",
@@ -258,10 +265,10 @@ class Server:
 
         if self.do_multicast:
             self._multicast_server = aiohttp.web.Application()
-            self._multicast_server.router.add_route("GET", "/", self.handle_multicast)
+            self._multicast_server.router.add_route("GET", "/",
+                                                    self.handle_multicast)
 
             self.loop.run_until_complete(
-                self.__start(self._multicast_server, self.multicast_port)
-            )
+                self.__start(self._multicast_server, self.multicast_port))
 
         self.loop.run_until_complete(self.__start(self._server, self.port))
